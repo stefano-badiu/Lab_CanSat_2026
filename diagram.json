@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "author": "Anonymous maker",
+  "editor": "wokwi",
+  "parts": [
+    { "type": "wokwi-arduino-uno", "id": "uno", "top": 77.4, "left": 57, "attrs": {} },
+    { "type": "wokwi-microsd-card", "id": "sd1", "top": -76.57, "left": 19.27, "attrs": {} },
+    { "type": "wokwi-mpu6050", "id": "imu1", "top": -82.58, "left": 328.72, "attrs": {} }
+  ],
+  "connections": [
+    [ "imu1:VCC", "uno:5V", "red", [ "v105.6", "h-134.32" ] ],
+    [ "imu1:GND", "uno:GND.2", "black", [ "v211.2", "h38.48" ] ],
+    [ "imu1:SCL", "uno:A5", "green", [ "v345.6", "h-67.12" ] ],
+    [ "imu1:SDA", "uno:A4", "green", [ "v0" ] ],
+    [ "sd1:VCC", "uno:5V", "red", [ "h0" ] ],
+    [ "sd1:GND", "uno:GND.3", "black", [ "h163.2", "v105.71" ] ],
+    [ "sd1:DI", "uno:11", "green", [ "h0" ] ],
+    [ "sd1:DO", "uno:12", "green", [ "h0" ] ],
+    [ "sd1:SCK", "uno:13", "green", [ "h0" ] ],
+    [ "sd1:CS", "uno:10", "green", [ "h0" ] ]
+  ],
+  "dependencies": {}
+}

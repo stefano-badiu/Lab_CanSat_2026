@@ -23,5 +23,9 @@ struct Telemetry{
     double TILT_X;
     double TILT_Y;
     double TILT_Z;
+    float ACC_X;
+    float ACC_Y;
+    float ACC_Z;
     //potremmo voler includere altri dati, ne discuteremmo
 };
+const char* fsmToString(FSM state); // Converte uno stato della FSM in una stringa leggibile
