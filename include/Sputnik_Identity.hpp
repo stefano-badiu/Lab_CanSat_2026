@@ -1,7 +1,6 @@
 #pragma once  //serve a prendere il file una sola volta, così non lo legge più volte creando problemi
 
-//VARIABILI
-#define SEALEVELPRESSURE_HPA (1013.25)
+
 
 enum FSM{
     STATE_IDLE, //esce quando rileva il lancio

@@ -15,10 +15,9 @@ Telemetry current_data;
 FSM currentState = STATE_IDLE; 
 
 void setup() {
-    // 1. Inizializzazione Hardware Universale
-    Wire.begin(); 
-    Serial.begin(9600); 
-    //questo cos'è????  
+ // inizializzazione Hardware Universale
+Wire.begin(); 
+Serial.begin(9600);   
 current_data.TEAM_ID = 33; 
 current_data.MISSION_TIME = 0;
 current_data.STATE = currentState;
@@ -35,40 +34,40 @@ current_data.ACC_Y = 0;
 current_data.ACC_Z = 0;
 
     #ifdef MODO_TEST
-        // 2. Logica specifica per il TEST (PC)
+        // Logica specifica per il TEST (PC)
         while (!Serial); // Aspetta che si accenda il monitor seriale
-        Serial.println("--- SPUTNIK-33cl: SYSTEM CHECK (TEST) ---");
+        Serial.println(F("--- SPUTNIK-33cl: SYSTEM CHECK (TEST) ---"));
         if (!init_GPS()) {
-            Serial.println("AVVISO: GPS non risponde.");
+            Serial.println(F("AVVISO: GPS non risponde."));
         } else {
-            Serial.println("GPS: Inizializzato (9600 baud).");
+            Serial.println(F("GPS: Inizializzato (9600 baud)."));
         }
         
         if (!init_BMP280()) {
-            Serial.println("ERRORE CRITICO: BMP280 non trovato!");
+            Serial.println(F("ERRORE CRITICO: BMP280 non trovato!"));
         } else {
-            Serial.println("BMP280: OK");
+            Serial.println(F("BMP280: OK"));
         }
 
         if(!init_MPU6050()) {
-            Serial.println("ERRORE: MPU6050 NON TROVATO");
+            Serial.println(F("ERRORE: MPU6050 NON TROVATO"));
         } else {
-            Serial.println("MPU6050: OK");
+            Serial.println(F("MPU6050: OK"));
         }
         if(!init_MicroSD()) {
-            Serial.println("ERRORE: MicroSD NON TROVATA");
+            Serial.println(F("ERRORE: MicroSD NON TROVATA"));
         } else {
-            Serial.println("MicroSD: OK");
+            Serial.println(F("MicroSD: OK"));
             if (!createLogFile()) {
-                Serial.println("ERRORE: Impossibile creare il file di log.");
+                Serial.println(F("ERRORE: Impossibile creare il file di log."));
             } else {
                 Serial.println("File di log creato con successo.");
                 if (!writeLogHeader()) {
-                    Serial.println("ERRORE: Impossibile scrivere l'intestazione del log.");
+                    Serial.println(F("ERRORE: Impossibile scrivere l'intestazione del log."));
                 } else {
-                    Serial.println("Intestazione del log scritta con successo.");
+                    Serial.println(F("Intestazione del log scritta con successo."));
                     flushLogFile(); // log pronto per la scrittura
-                    Serial.println("Log file pronto per la scrittura.");
+                    Serial.println(F("Log file pronto per la scrittura."));
                 }
             }
         }
@@ -93,29 +92,30 @@ void loop() {
     // 2. INVIO DATI OGNI SECONDO (1000ms)
     if (millis() - lastTelemetryTime >= 1000) {
         lastTelemetryTime = millis(); // Resetta il timer
-        /*current_data.MISSION_TIME = millis(); // Aggiorna il tempo di missione
-        current_data.STATE = currentState; // Aggiorna lo stato attuale (da implementare la logica di transizione)*/
+        current_data.MISSION_TIME = millis(); // Aggiorna il tempo di missione
+       // current_data.STATE = currentState; // Aggiorna lo stato attuale (da implementare la logica di transizione)
 
     #ifdef MODO_TEST
         // Telemetria Dettagliata per il TEST (PC)
-        //Serial.print(" | Lon: "); Serial.print(current_data.GPS_LONGITUDE, 6);
-        //Serial.print(" | Sats: "); Serial.println(current_data.GPS_SATS);
-        Serial.print("Altitudine: ");
+        Serial.print(F(" | Lon: ")); Serial.print(current_data.GPS_LONGITUDE, 6);
+        Serial.print(F(" | Lat: ")); Serial.print(current_data.GPS_LATITUDE, 6);
+        Serial.print(F(" | Sats: ")); Serial.println(current_data.GPS_SATS);
+        Serial.print(F("Altitudine: "));
         Serial.print(current_data.ALTITUDE);
-        Serial.print(" m | Temp: ");
+        Serial.print(F(" m | Temp: "));
         Serial.print(current_data.TEMPERATURE);
-        Serial.println(" *C");
-        Serial.print("TILT_X: ");
+        Serial.println(F(" *C"));
+        Serial.print(F("TILT_X: "));
         Serial.print(current_data.TILT_X);
-        Serial.print("  TILT_Y: ");
+        Serial.print(F("  TILT_Y: "));
         Serial.print(current_data.TILT_Y);
-        Serial.print("  TILT_Z: ");
+        Serial.print(F("  TILT_Z: "));
         Serial.println(current_data.TILT_Z);
-        Serial.print("ACC_X: ");
+        Serial.print(F("ACC_X: "));
         Serial.print(current_data.ACC_X);
-        Serial.print("  ACC_Y: ");
+        Serial.print(F("  ACC_Y: "));
         Serial.print(current_data.ACC_Y);
-        Serial.print("  ACC_Z: ");
+        Serial.print(F("  ACC_Z: "));
         Serial.println(current_data.ACC_Z);
         
         
