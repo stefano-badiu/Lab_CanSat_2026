@@ -64,7 +64,7 @@ bool writeLogHeader(){
     
     }
 
-    logFile.println("TEAM_ID,MISSION_TIME,STATE,ALTITUDE,TEMPERATURE,GPS_LATITUDE,GPS_LONGITUDE,GPS_SATS,TILT_X,TILT_Y,TILT_Z"); // Scrivo la prima riga del CSV con i nomi delle colonne
+    logFile.println("TEAM_ID,MISSION_TIME,STATE,ALTITUDE,TEMPERATURE,GPS_LATITUDE,GPS_LONGITUDE,GPS_SATS,TILT_X,TILT_Y,TILT_Z,ACC_X,ACC_Y,ACC_Z"); // Scrivo la prima riga del CSV con i nomi delle colonne
     headerWritten = true; // Segno che l'header è stato scritto
     return true; // L'header è stato scritto con successo
 }
