@@ -58,6 +58,11 @@ current_data.ACC_Z = 0;
         } else {
             Serial.println(F("MPU6050: OK"));
         }
+        if (!calibrate_MPU6050_accel(100, 50)) {
+            Serial.println(F("AVVISO: Impossibile calibrare MPU6050 accelerometro."));
+        } else {
+            Serial.println(F("MPU6050 accelerometro calibrato con successo."));
+        }
         if(!init_MicroSD()) {
             Serial.println(F("ERRORE: MicroSD NON TROVATA"));
         } else {
