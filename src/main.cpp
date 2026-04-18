@@ -14,6 +14,11 @@
 Telemetry current_data;
 FSM currentState = STATE_IDLE; 
 SoftwareSerial SerialCamera(5, 6);
+
+// --- AGGIUNTA XBEE ---
+SoftwareSerial xbeeSerial(7, 8); // Definizione dei pin per Xbee
+Xbee_S2C xbee(xbeeSerial);       // Creazione oggetto xbee
+
 void setup() {
  // inizializzazione Hardware Universale
 Wire.begin(); 
@@ -54,6 +59,11 @@ current_data.ACC_Z = 0;
         } else {
             Serial.println(F("MPU6050: OK"));
         }
+        if (!calibrate_MPU6050_accel(100, 50)) {
+            Serial.println(F("AVVISO: Impossibile calibrare MPU6050 accelerometro."));
+        } else {
+            Serial.println(F("MPU6050 accelerometro calibrato con successo."));
+        }
         if(!init_MicroSD()) {
             Serial.println(F("ERRORE: MicroSD NON TROVATA"));
         } else {
@@ -75,7 +85,8 @@ current_data.ACC_Z = 0;
         #else
         // 3. Logica specifica per il LANCIO (XBee/Autonomo)
         delay(2000); // Pausa di sicurezza per stabilizzare l'elettronica
-       // init_BMP280(); // Inizializzazione
+        // init_BMP280(); // Inizializzazione
+        xbeeSerial.begin(9600); // --- AGGIUNTA XBEE: Inizializzazione seriale radio ---
         init_GPS(); //Inizializzazione
     #endif
 }
@@ -138,6 +149,8 @@ void loop() {
         Serial.print(","); Serial.print(current_data.GPS_LATITUDE, 6);
         Serial.print(","); Serial.print(current_data.GPS_LONGITUDE, 6);
         Serial.print(","); Serial.println(current_data.GPS_SATS);
+        
+        xbee.sendTelemetry(current_data); // --- AGGIUNTA XBEE: Invio effettivo via radio ---
        
     #endif
         if (is_MicroSD_ready()) {

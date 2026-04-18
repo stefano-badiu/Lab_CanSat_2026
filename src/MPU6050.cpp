@@ -51,9 +51,16 @@ bool init_MPU6050() {                        // Funzione di inizializzazione del
 void read_MPU6050() {                        // Funzione che legge i dati del sensore e aggiorna la telemetria
     if (!mpuReady) return;                   // Se il sensore non è pronto, esce subito senza fare nulla
 
-    const float ax = static_cast<float>(readAxisRegister(0x3B)) / 16384.0F; // Legge accelerazione asse X e la converte in g
-    const float ay = static_cast<float>(readAxisRegister(0x3D)) / 16384.0F; // Legge accelerazione asse Y e la converte in g
-    const float az = static_cast<float>(readAxisRegister(0x3F)) / 16384.0F; // Legge accelerazione asse Z e la converte in g
+    float ax = static_cast<float>(readAxisRegister(0x3B)) / 16384.0F; // Legge accelerazione asse X e la converte in g
+    float ay = static_cast<float>(readAxisRegister(0x3D)) / 16384.0F; // Legge accelerazione asse Y e la converte in g
+    float az = static_cast<float>(readAxisRegister(0x3F)) / 16384.0F; // Legge accelerazione asse Z e la converte in g
+
+    if (is_MPU6050_calibrated()) {              // Se il sensore è calibrato, applica i dati di calibrazione
+        const MPU6050CalibrationData calib = get_MPU6050_calibration_data(); // Ottiene i dati di calibrazione
+        ax = (ax - calib.biasX) * calib.scaleX; // Applica bias e scale all'asse X
+        ay = (ay - calib.biasY) * calib.scaleY; // Applica bias e scale all'asse Y
+        az = (az - calib.biasZ) * calib.scaleZ; // Applica bias e scale all'asse Z
+    }
 
     const float magnitude = sqrtf((ax * ax) + (ay * ay) + (az * az)); // Calcola il modulo del vettore accelerazione nello spazio 3D
 
@@ -72,3 +79,47 @@ bool is_MPU6050_ready() {                    // Funzione che permette al resto d
     return mpuReady;                         // Restituisce true se il sensore è inizializzato, false altrimenti
 }
 
+static MPU6050CalibrationData calibrationData = {0, 0, 0, 1, 1, 1, false}; // Dati di calibrazione predefiniti (non validi)
+
+void reset_MPU6050_calibration() {                 // Funzione che resetta i dati di calibrazione ai valori di default
+    calibrationData = {0, 0, 0, 1, 1, 1, false}; // Bias a 0, scale a 1, valid=false
+}
+
+bool is_MPU6050_calibrated() {                     // Funzione che indica se il sensore è stato calibrato
+    return calibrationData.valid;              // Restituisce true se i dati di calibrazione sono validi, false altrimenti
+}
+MPU6050CalibrationData get_MPU6050_calibration_data() { // Funzione che restituisce i dati di calibrazione attuali
+    return calibrationData;                   // Restituisce la struttura con i dati di calibrazione (bias, scale, valid)
+}
+
+void set_MPU6050_calibration_data(const MPU6050CalibrationData& calibData) { // Funzione che permette di impostare manualmente i dati di calibrazione
+    if (!calibData.valid) return;            // Se i dati passati non sono validi, ignora la richiesta
+
+    calibrationData = calibData;             // Aggiorna i dati di calibrazione con quelli forniti
+}
+
+bool calibrate_MPU6050_accel(uint16_t sampleCount, uint16_t sampleDelayMs) { // Funzione che esegue la calibrazione dell'accelerometro
+    if (!mpuReady) return false;            // Se il sensore non è pronto, non può essere calibrato
+    if (sampleCount == 0) return false;     // Se il numero di campioni è zero, non ha senso procedere
+
+    float sumX = 0, sumY = 0, sumZ = 0;    // Variabili per accumulare le somme delle letture degli assi
+    for (uint16_t i = 0; i < sampleCount; ++i) { // Ciclo per acquisire un certo numero di campioni
+        sumX += static_cast<float>(readAxisRegister(0x3B)) / 16384.0F; // Legge e accumula l'accelerazione asse X
+        sumY += static_cast<float>(readAxisRegister(0x3D)) / 16384.0F; // Legge e accumula l'accelerazione asse Y
+        sumZ += static_cast<float>(readAxisRegister(0x3F)) / 16384.0F; // Legge e accumula l'accelerazione asse Z
+        delay(sampleDelayMs); // Attende un breve intervallo tra le letture per stabilizzare i dati
+    }
+
+    calibrationData.biasX = sumX / sampleCount; // Calcola il bias medio sull'asse X
+    calibrationData.biasY = sumY / sampleCount; // Calcola il bias medio sull'asse Y
+    calibrationData.biasZ = (sumZ / sampleCount) - 1.0F; // Calcola il bias medio sull'asse Z, sottraendo 1g per compensare la gravità
+
+    calibrationData.scaleX = 1.0F;
+    calibrationData.scaleY = 1.0F;
+    calibrationData.scaleZ = 1.0F;
+    calibrationData.valid = true;
+
+
+    return true;                             // Restituisce true per indicare che la calibrazione è stata completata con successo
+    
+}
