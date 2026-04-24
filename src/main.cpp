@@ -7,12 +7,15 @@
 #include "GPS_PA6H.hpp"
 #include "Xbee_S2C.hpp"
 #include "MicroSD.hpp"
-
+#include "MissionControl.hpp"
+#include "INA219.hpp"
 // --- INTERRUTTORE DI MISSIONE ---
-#define MODO_TEST // %%%%%%%%%%%%Commenta questa riga per il lancio reale%%%%%%%%%%%%%
+#define MOD_TEST // %%%%%%%%%%%%Commenta questa riga per il lancio reale%%%%%%%%%%%%%
 
+INA219BatteryMonitor batteryMonitor;
 Telemetry current_data;
 FSM currentState = STATE_IDLE; 
+SoftwareSerial SerialCamera(5, 6);
 
 // --- AGGIUNTA XBEE ---
 SoftwareSerial xbeeSerial(7, 8); // Definizione dei pin per Xbee
@@ -36,8 +39,13 @@ current_data.TILT_Z = 0;
 current_data.ACC_X = 0;
 current_data.ACC_Y = 0;
 current_data.ACC_Z = 0;
+current_data.BATTERY_VOLTAGE_V = 0;
+current_data.BATTERY_CURRENT_mA = 0;
+current_data.BATTERY_POWER_mW = 0;
+current_data.BATTERY_CONSUMED_mWH = 0;
+current_data.BATTERY_REMAINING_PCT = 0;
 
-    #ifdef MODO_TEST
+    #ifdef MOD_TEST
         // Logica specifica per il TEST (PC)
         while (!Serial); // Aspetta che si accenda il monitor seriale
         Serial.println(F("--- SPUTNIK-33cl: SYSTEM CHECK (TEST) ---"));
@@ -80,6 +88,13 @@ current_data.ACC_Z = 0;
                 }
             }
         }
+        if (!batteryMonitor.init_INA219()) {
+            Serial.println(F("ERRORE: Impossibile inizializzare il monitor batteria INA219."));
+        } else {
+            Serial.println(F("Monitor batteria INA219: OK"));
+            batteryMonitor.setBatteryCapacity(1000.0f); // Imposta la capacità della batteria a 1000 mWh per i test
+            batteryMonitor.setInitialSocPercent(100.0f); // Assume che la batteria sia completamente carica all'inizio
+        }
     
         #else
         // 3. Logica specifica per il LANCIO (XBee/Autonomo)
@@ -91,21 +106,39 @@ current_data.ACC_Z = 0;
 }
 
 unsigned long lastTelemetryTime = 0;
-
+unsigned long lastPhotoTime = 0;
 void loop() {
     update_GPS_data();
     // Lettura dati (Sempre attiva)
     read_BMP280();//&&&&&&&&&&&&&
     read_MPU6050();
-    // Qui aggiungeremo il resto dei sensori
+    batteryMonitor.read_INA219();
+    InaSample batterySample = batteryMonitor.getLastSample();
+    current_data.BATTERY_VOLTAGE_V = batterySample.voltage_V;
+    current_data.BATTERY_CURRENT_mA = batterySample.current_mA;
+    current_data.BATTERY_POWER_mW = batterySample.power_mW;
+    current_data.BATTERY_CONSUMED_mWH = batterySample.energy_mWh;
+    current_data.BATTERY_REMAINING_PCT = batterySample.remaining_pct;
 
+    
+    
+    // Qui aggiungeremo il resto dei sensori
+    // SCATTO FOTO CON TEMPO IBRIDO (CONTROLLARE IL MISSIONCONTROL)
+    if (photoInterval > 0 && (millis() - lastPhotoTime >= photoInterval)) {
+        lastPhotoTime = millis(); // Resetta il timer della fotocamera
+        
+        // Creiamo e inviamo il pacchetto
+        String pacchetto_cam = String(current_data.MISSION_TIME) + ";" + 
+                               String(current_data.ALTITUDE) + ";" + 
+                               String(current_data.STATE);
+        SerialCamera.println(pacchetto_cam);
+    }
     // 2. INVIO DATI OGNI SECONDO (1000ms)
     if (millis() - lastTelemetryTime >= 1000) {
         lastTelemetryTime = millis(); // Resetta il timer
         current_data.MISSION_TIME = millis(); // Aggiorna il tempo di missione
        // current_data.STATE = currentState; // Aggiorna lo stato attuale (da implementare la logica di transizione)
-
-    #ifdef MODO_TEST
+    #ifdef MOD_TEST
         // Telemetria Dettagliata per il TEST (PC)
         Serial.print(F(" | Lon: ")); Serial.print(current_data.GPS_LONGITUDE, 6);
         Serial.print(F(" | Lat: ")); Serial.print(current_data.GPS_LATITUDE, 6);
@@ -127,6 +160,17 @@ void loop() {
         Serial.print(current_data.ACC_Y);
         Serial.print(F("  ACC_Z: "));
         Serial.println(current_data.ACC_Z);
+        Serial.print(F("Battery Voltage: "));
+        Serial.print(current_data.BATTERY_VOLTAGE_V);
+        Serial.print(F(" V | Current: "));
+        Serial.print(current_data.BATTERY_CURRENT_mA);
+        Serial.print(F(" mA | Power: "));
+        Serial.print(current_data.BATTERY_POWER_mW);
+        Serial.print(F(" mW | Consumed: "));
+        Serial.print(current_data.BATTERY_CONSUMED_mWH);
+        Serial.print(F(" mWh | Remaining: "));
+        Serial.print(current_data.BATTERY_REMAINING_PCT);
+        
         
         
     #else
