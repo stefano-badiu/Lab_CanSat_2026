@@ -26,6 +26,11 @@ struct Telemetry{
     float ACC_X;
     float ACC_Y;
     float ACC_Z;
+    float BATTERY_VOLTAGE_V; 
+    float BATTERY_CURRENT_mA; 
+    float BATTERY_POWER_mW; 
+    float BATTERY_CONSUMED_mWH; 
+    float BATTERY_REMAINING_PCT; 
     //potremmo voler includere altri dati, ne discuteremmo
 };
 const char* fsmToString(FSM state); // Converte uno stato della FSM in una stringa leggibile
