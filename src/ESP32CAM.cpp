@@ -68,8 +68,6 @@ void parse_incoming_data(const char* raw_string){
     if (raw_string[0] == 'P') {
         // CASO 1: È l'ordine di SCATTARE UNA FOTO (Prefisso 'P')
         // Esempio: "P;12000;150.5;2"
-        Photo_Data dati_estratti;
-        int state_temp = 0;
     Photo_Data dati_estratti;
     int state_temp = 0; // Variabile temporanea per leggere lo stato (che è un enum)
 

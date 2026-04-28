@@ -47,7 +47,7 @@ void loop() {
         char c = SerialNano.read();
 
         // Se troviamo il carattere di fine riga (\n) o il buffer è pieno
-        if (c == '\n' || index >= 127) {
+        if (c == '\n' || index >= 254) {
             buffer[index] = '\0'; // Chiudiamo la stringa
             
             #ifdef MOD_TEST

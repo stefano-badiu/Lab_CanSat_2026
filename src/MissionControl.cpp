@@ -39,16 +39,18 @@ bool detect_apogee() {
     
     if (new_altitude > m) { m = new_altitude; }
     
+    // Se siamo scesi oltre la tolleranza...
     if (m > (new_altitude + eps_a)) {
         if (inizio_caduta == 0) { 
-            inizio_caduta = millis(); 
+            inizio_caduta = millis(); // Avvia timer
         }
         else if (millis() - inizio_caduta >= t_conferma_apogeo) { 
             return true; // APOGEO CONFERMATO
+        }
     } else {
+        // Se la quota è tornata su, era un falso allarme: resetta il timer
         inizio_caduta = 0; 
     }
-}
     
     return false; 
 }
