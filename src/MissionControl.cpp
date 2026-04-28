@@ -64,16 +64,18 @@ bool detect_altitude() {
 
     if (current_data.ALTITUDE <= soglia_sgancio) {
         if (inizio_sotto_quota == 0) {
-            inizio_sotto_quota = millis();
+            inizio_sotto_quota = millis(); // Start timer
         }
-        else if (millis() - inizio_sotto_quota >= t_conferma_sgancio) {
-            return true; 
-       } else {
-        // Se la quota torna sopra i 110m (era solo rumore del sensore), resetta
+        
+        if (millis() - inizio_sotto_quota >= t_conferma_sgancio) {
+            return true; // OK: Time passed, confirm deploy
+        }
+    } 
+    else {
+        // RESET: Solo se la quota è tornata sopra la soglia
         inizio_sotto_quota = 0;
     }
     return false;   
-}
 }
 
 

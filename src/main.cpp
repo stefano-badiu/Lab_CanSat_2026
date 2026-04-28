@@ -15,7 +15,6 @@
 
 INA219BatteryMonitor batteryMonitor;
 Telemetry current_data;
-FSM currentState = STATE_IDLE;
 //SERIALI VIRTUALI
 SoftwareSerial SerialCamera(7, 8);
 
@@ -27,7 +26,7 @@ void setup() {
 Wire.begin(); 
 Wire.setWireTimeout(25000, true);
 Serial.begin(9600); 
-SerialCamera.begin(9600); 
+SerialCamera.begin(38400); 
 
 /*In Arduino, se avvii due SoftwareSerial, lui ascolta solo l'ultima accesa.
 Dobbiamo dirgli di ignorare la fotocamera (che tanto deve solo trasmettere)
@@ -35,7 +34,7 @@ e di tenere l'orecchio incollato al modulo GPS.*/
 focus_GPS();
 current_data.TEAM_ID = 33; 
 current_data.MISSION_TIME = 0;
-current_data.STATE = currentState;
+current_data.STATE = STATE_IDLE;
 current_data.ALTITUDE = 0;
 current_data.TEMPERATURE = 0;
 current_data.GPS_LATITUDE = 0;
@@ -122,6 +121,7 @@ void loop() {
 
     check_radio_commands();
     accumulate_MPU6050_data(); // raccoglie l'accelerazione a raffica
+    update_GPS_data();
     // 3. Il barometro e la FSM vengono aggiornati solo ogni 50ms
     if (millis() - lastBMPTime >= intervallo_BMP) {
         lastBMPTime = millis();
@@ -147,9 +147,8 @@ void loop() {
     if (millis() - lastTelemetryTime >= 1000) {
         lastTelemetryTime = millis(); // Resetta il timer
         current_data.MISSION_TIME = millis(); // Aggiorna il tempo di missione
-        current_data.STATE = currentState; // Aggiorna lo stato attuale (da implementare la logica di transizione)
         compute_and_save_MPU6050();
-        update_GPS_data(); //sono lenti, li aggiorno solo 1 volta al secondo
+        //sono lenti, li aggiorno solo 1 volta al secondo
         
         batteryMonitor.read_INA219();
         InaSample batterySample = batteryMonitor.getLastSample();
@@ -181,10 +180,7 @@ void loop() {
     SerialCamera.print(current_data.BATTERY_POWER_mW);     SerialCamera.print(F(","));
     SerialCamera.print(current_data.BATTERY_CONSUMED_mWH); SerialCamera.print(F(","));
     SerialCamera.print(current_data.BATTERY_REMAINING_PCT);
-    
-    // Il println finale invia il carattere di a capo ('\n'). 
-    // Fondamentale perché segnala all'ESP32 che il pacchetto è finito e può salvarlo.
-    SerialCamera.println(>);
+    SerialCamera.println(F(">"));
    
     #ifdef MOD_TEST
         // Telemetria Dettagliata per il TEST (PC)
